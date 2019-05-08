@@ -14,6 +14,7 @@ module ActiveJobLog
     before_save :set_queued_duration
     before_save :set_execution_duration
     before_save :set_total_duration
+    before_save :stringify_params
 
     def self.update_job!(job_id, status, params = {})
       params.merge!(status_to_params(status))
@@ -67,6 +68,19 @@ module ActiveJobLog
       from = queued_at || started_at
       return if from.blank? || ended_at.blank?
       self.total_duration = (ended_at.to_f - from.to_f).to_i
+    end
+
+    def stringify_params
+      self.params = recursively_clean(params)
+    end
+
+    def recursively_clean(level)
+      case level
+      when Array
+        level.map { |x| recursively_clean(x) }
+      else
+        level.to_s
+      end
     end
   end
 end
